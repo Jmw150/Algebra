@@ -9,9 +9,9 @@
 ;; 
 ;; index
 ;; - scheme stuff
-;; - first order logic
-;; - algebra
-;; - unit test
+;; - less modern algebra
+;; - modern algebra
+;; - unit tests
 ;;
 ;; 
 ;; Chicken scheme stuff:
@@ -19,9 +19,10 @@
 ;; for older than chicken 5, c-numerals are assumed, so use this
 ;; (require-library numbers) 
 ;; The newest specification for scheme, chicken is default r5rs
+;; so use this for cleaner r7rs spec
 (require-library r7rs) 
 ;;
-;; quality of life stuff
+;; quality of life improvements
 (define true  #t)
 (define false #f)
 (define (first x) (car x))
@@ -37,18 +38,6 @@
        (syntax-rules ()
          ((id . pattern) template))))))
 
-; while loop
-(define-syntax while
-  (syntax-rules ()
-    ((_ condition . body)
-     (let loop () (cond (condition (begin . body) (loop)))))))
-
-; python style for loop
-(define-syntax for
-  (syntax-rules (in)
-                ((for elem in alist body ...)
-                 (for-each (lambda (elem) body ...) alist))))
-
 ; standard while loop from C and python
 (define-syntax while
   (syntax-rules ()
@@ -58,7 +47,14 @@
                      body ...
                      (loop))))))
 
-(define (= a b) (equal? a b)) ; this can be set to mean other things
+; python style for loop
+(define-syntax for
+  (syntax-rules (in)
+                ((for elem in alist body ...)
+                 (for-each (lambda (elem) body ...) alist))))
+
+; starting notion of equality
+(define (= a b) (equal? a b)) 
 (define (!= a b) (not (= a b)))
 
 (define (index lst ndex)
@@ -94,9 +90,14 @@
 (define (get+ A) (cadr A))
 (define (get* A) (caddr A))
 
+
 ;;
-;;; first order logic:
-;;
+;;; lesser algebra:
+;;    All formalisms that makes the algebra easier such as
+;;    first order logic, set theory, category theory, 
+;;    type theory, and number theory
+
+;; finite for all quantifier
 (define-syntax for-all
   (syntax-rules (in)
                 ((for-all elem in alist body)
@@ -107,6 +108,7 @@
                             (set! statement false)))
                    statement))))
 
+;; finite exists quantifier
 (define-syntax exists
   (syntax-rules (in)
                 ((exists elem in alist body)
@@ -116,14 +118,84 @@
                             (set! statement true)
                             'keep-going))
                    statement))))
-;(for-all a in A (exists b in B (= b a)))
 
+;; finite epsilon operator
 (define (in? a A)
   (define is-a-in-A? false)
   (for x in A
        (if (= x a) (set! is-a-in-A? true) 'keep-trying))
   is-a-in-A?)
-;(in? 1 A)
+
+(define (cross A B)
+  "cross product commonly seen in naive set theory"
+  (define C '())
+  (for a in A
+       (for b in B
+            (set! C (append C (list (list a b))))))
+  C)
+
+(define (filter bool-function A)
+  "filter : this is the finite axiom schema of specification,
+take from set A all elements meeting the specification"
+  (define return-list '())
+  (for a in A
+       (if (bool-function a) 
+           (set! return-list (append return-list (list a)))
+           'boop))
+  return-list)
+
+(define (set= A B)
+  "using axiom of extensionality"
+  (for-all a in A
+       (for-all b in B
+            (= a b))))
+
+
+(define (intersection A B)
+  (define C '())
+  (for x in A 
+       (if (and (and (in? x A) (in? x B)) ; set builder description
+                     (not (in? x C)))     ; uniqueness
+           (set! C (append C (list x)))
+           'do-nothing))
+  (for x in B
+       (if (and (and (in? x A) (in? x B))
+                     (not (in? x C)))     
+           (set! C (append C (list x)))
+           'do-nothing))
+  C)
+
+(define (union A B)
+  (define C '())
+  (for x in A 
+       (if (and (or  (in? x A) (in? x B))
+                     (not (in? x C)))     
+           (set! C (append C (list x)))
+           'do-nothing))
+  (for x in B
+       (if (and (or  (in? x A) (in? x B))
+                     (not (in? x C)))     
+           (set! C (append C (list x)))
+           'do-nothing))
+  C)
+  
+(define (subset A B)
+  (define C '())
+  (for x in A 
+       (if (and (or (not (in? x A)) (in? x B)) 
+                (not (in? x C))) 
+           (set! C (append C (list x))) 
+           'do-not))
+  (for x in B
+       (if (and (or (not (in? x A)) (in? x B)) 
+                (not (in? x C))) 
+           (set! C (append C (list x))) 
+           'do-not))
+  C)
+
+; difference
+; disjoint union
+
 
 ;;
 ;;; algebra:
@@ -136,31 +208,35 @@
            (set! id e)))
   id)
 
-(define (X A B)
+(define (cross-op A+ B+)
+  "set theory cross product but with operators of groups"
+  (define (C+ ca cb) 
+    (list (A+ (car ca) (car cb))
+          (B+ (cadr ca) (cadr cb))))
+  C+)
+
+(define (cross-group A B)
   "set theory cross product but with groups"
   (define A-set (get-set A))
   (define A+    (get+    A))
   (define B-set (get-set B))
   (define B+    (get+    B))
-  (define C '())
-  (for a in A-set
-       (for b in B-set
-            (set! C (append C (list (list a b))))))
-  (define (C+ ca cb) 
-    (list (A+ (car ca) (car cb))
-          (B+ (cadr ca) (cadr cb))))
-  (list C C+))
+  (define C-set (cross A-set B-set))
+  (define C+    (cross-op A+ B+))
+  (list C-set C+))
 
-
-
-(define (filter bool-function A)
-  (define return-list '())
-  (for a in A
-       (if (bool-function a) 
-           (set! return-list (append return-list (list a)))
-           'boop))
-  return-list)
-;(filter (lambda (a) (not (= a 1))) A)
+(define (cross-ring A B)
+  "set theory cross product but with groups"
+  (define A-set (get-set A))
+  (define A+    (get+    A))
+  (define A*    (get*    A))
+  (define B-set (get-set B))
+  (define B+    (get+    B))
+  (define B*    (get*    B))
+  (define C-set (cross A-set B-set))
+  (define C+    (cross-op A+ B+))
+  (define C*    (cross-op A* B*))
+  (list C-set C+ C*))
 
 ;; primitive parts
 (define (closure? A +)
@@ -178,7 +254,6 @@
   (exists e in A 
      (for-all a in A 
         (= (+ a e) a))))
-
 
 (define (exists-inverse? A + =)
   ; find inverse
@@ -203,7 +278,6 @@
   (and (associative? A + =)                
        (exists-identity? A + =) 
        (exists-inverse? A + =)))
-;(group? A A+ =)
 
 (define (commutative? A + =)
   (for-all a in A
@@ -213,7 +287,6 @@
 (define (abelian-group? A + =)
   (and (group? A + =)
        (commutative? A + =)))
-;(abelian-group? A A-op =)
 
 (define (right-distributive? A + * =)
   (for-all a in A
@@ -241,19 +314,16 @@
         (associative? A * =)
         (right-distributive? A + * =)
         (left-distributive? A + * =)))
-;(ring? A A+ A* =)
 
 (define (abelian-ring? A + * =)
   (and (ring? A + * =) 
        (commutative? A * =)))
-;(abelian-ring? A A+ A* =)
 
 (define (ring-with-id? A + * =)
   (and (ring? A + * =)
        (exists-identity? A * =)
        (not (= (get-id A + =) 
                (get-id A * =)))))
-;(ring-with-id? A A+ A* =)
 
 (define (integral-domain? A + * =)
   (define id+ (get-id A + =))
@@ -265,7 +335,6 @@
              (or (not (= (* a b) id+)) 
                  (= a id+) 
                  (= b id+))))))
-;(integral-domain? A A+ A* =)
 
 (define (division-ring? A + * =)
   (define id+ (get-id A + =))
@@ -276,7 +345,6 @@
            (exists a-inv in A* 
                    (and (= (* a a-inv) id*) 
                         (= (* a-inv a) id*))))))
-;(division-ring? A A+ A* =)
 
 (define (field? A + * =)
   (define id+ (get-id A + =))
@@ -284,7 +352,14 @@
   (and (abelian-group? A + =)
        (abelian-group? A* * =)
        (right-distributive? A + * =)))
-;(field? A A+ A* =)
+
+(define (subring? S + * =)
+  " A nonempty subset S of a ring R is a subring if S is closed under
+subtraction and multiplication. That is, if a - b and ab are in S
+whenever a and b are in S "
+  (for-all a in S
+           (for-all b in S
+                    (and (in? (+ a (inverse b)) S) (in? (* a b) S)))))
 
 (define (cayley-table A +)
   (define CT '())
@@ -317,8 +392,19 @@
         (lambda (a b) (mod (* a b) n))))
 
 
+(define (matrix-multiply matrix1 matrix2)
+  (map
+   (lambda (row)
+    (apply map
+     (lambda column
+      (apply + (map * row column)))
+     matrix2))
+   matrix1))
+(matrix-multiply '((1 2) (3 4)) '((-3 -8 3) (-2 1 4))) ; ((-7 -6 11) (-17 -20 25))
 
-;; unit test:
+;;
+;;; unit tests:
+;;
 (define z5 (Z_n 5))
 z5
 (define A  (get-set z5))
@@ -331,14 +417,14 @@ z5
 (define B* (get*    z6))
 
 (define z3 (Z_n 3))
-(define C  (get-set (X z3 z3)))
-(define C+ (get+ (X z3 z3)))
+(define C  (cross    z3 z3))
+(define C+ (cross-op z3 z3))
 
 
-;(print-cayley-table! A A+) 
-;(print-cayley-table! A A*) 
-;(print-cayley-table! B B+) 
-;(print-cayley-table! B B*)
+(print-cayley-table! A A+) 
+(print-cayley-table! A A*) 
+(print-cayley-table! B B+) 
+(print-cayley-table! B B*)
 
 ;C
 ;(print-cayley-table! C C+)
@@ -355,38 +441,19 @@ z5
 
 ; these really need better semantics
 
-;(define (intersection A B)
-;  (define C '())
-;  (for a in A
-;       (for b in B
-;            (if (and (and (in? a A) (in? b B)) ; classical def
-;                     (not (in? a C)))          ; cut redundancy
-;                (set! C (append C (list a)))
-;                'do-not)))
-;  C)
-;(intersection A B)
-;
-;(define (union A B)
-;  (define C '())
-;  (for a in A
-;       (for b in B
-;            (if (and (or (in? a A) (in? b B)) ; classical def
-;                     (not (in? b C)))         ; cut redundancy
-;                (set! C (append C (list b))) 
-;                'do-not)))
-;  C)
-;(union A B)
-;  
-;(define (subset A B)
-;  (define C '())
-;  (for a in A
-;       (for b in B
-;            (if (and (or (not (in? a A)) (in? b B))
-;                     (not (in? a C)))         ; cut redundancy
-;                (set! C (append C (list a))) 
-;                'do-not)))
-;  C)
-;(subset A B)
-;"
-;
 
+
+(for-all a in A (exists b in B (= b a)))
+(in? 1 A)
+(filter (lambda (a) (not (= a 1))) A)
+(group? A A+ =)
+(abelian-group? A A+ =)
+(integral-domain? A A+ A* =)
+(ring? A A+ A* =)
+(abelian-ring? A A+ A* =)
+(ring-with-id? A A+ A* =)
+(division-ring? A A+ A* =)
+(field? A A+ A* =)
+(intersection A B)
+(union A B)
+(subset A B)
