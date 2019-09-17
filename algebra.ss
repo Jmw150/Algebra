@@ -405,30 +405,33 @@ whenever a and b are in S "
 ;;
 ;;; unit tests:
 ;;
-(define z5 (Z_n 5))
-z5
-(define A  (get-set z5))
-(define A+ (get+    z5))
-(define A* (get*    z5))
+;(define z5 (Z_n 5))
+;z5
+;(define A  (get-set z5))
+;(define A+ (get+    z5))
+;(define A* (get*    z5))
 
-(define z6 (Z_n 6))
-(define B  (get-set z6))
-(define B+ (get+    z6))
-(define B* (get*    z6))
+;(define z6 (Z_n 6))
+;(define B  (get-set z6))
+;(define B+ (get+    z6))
+;(define B* (get*    z6))
 
-(define z3 (Z_n 3))
-(define C  (cross    z3 z3))
-(define C+ (cross-op z3 z3))
+;(define z3 (Z_n 3))
+;(define C  (cross    z3 z3))
+;(define C+ (cross-op z3 z3))
 
 
-(print-cayley-table! A A+) 
-(print-cayley-table! A A*) 
-(print-cayley-table! B B+) 
-(print-cayley-table! B B*)
+;(print-cayley-table! A A+) 
+;(print-cayley-table! A A*) 
+;(print-cayley-table! B B+) 
+;(print-cayley-table! B B*)
 
 ;C
 ;(print-cayley-table! C C+)
 
+(define z6 (Z_n 6))
+(print-cayley-table! (get-set z6) (get+ z6))
+(print-cayley-table! (get-set z6) (get* z6))
 
 
 ;(define (group-isomorphism? A A+ B B+)
@@ -443,17 +446,17 @@ z5
 
 
 
-(for-all a in A (exists b in B (= b a)))
-(in? 1 A)
-(filter (lambda (a) (not (= a 1))) A)
-(group? A A+ =)
-(abelian-group? A A+ =)
-(integral-domain? A A+ A* =)
-(ring? A A+ A* =)
-(abelian-ring? A A+ A* =)
-(ring-with-id? A A+ A* =)
-(division-ring? A A+ A* =)
-(field? A A+ A* =)
-(intersection A B)
-(union A B)
-(subset A B)
+;(for-all a in A (exists b in B (= b a)))
+;(in? 1 A)
+;(filter (lambda (a) (not (= a 1))) A)
+;(group? A A+ =)
+;(abelian-group? A A+ =)
+;(integral-domain? A A+ A* =)
+;(ring? A A+ A* =)
+;(abelian-ring? A A+ A* =)
+;(ring-with-id? A A+ A* =)
+;(division-ring? A A+ A* =)
+;(field? A A+ A* =)
+;(intersection A B)
+;(union A B)
+;(subset A B)
