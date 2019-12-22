@@ -429,9 +429,9 @@ whenever a and b are in S "
 ;C
 ;(print-cayley-table! C C+)
 
-(define z6 (Z_n 6))
-(print-cayley-table! (get-set z6) (get+ z6))
-(print-cayley-table! (get-set z6) (get* z6))
+(define z8 (Z_n 8))
+(print-cayley-table! (get-set z8) (get+ z8))
+(print-cayley-table! (get-set z8) (get* z8))
 
 
 ;(define (group-isomorphism? A A+ B B+)
