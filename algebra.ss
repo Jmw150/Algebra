@@ -20,7 +20,7 @@
 ;; (require-library numbers) 
 ;; The newest specification for scheme, chicken is default r5rs
 ;; so use this for cleaner r7rs spec
-(require-library r7rs) 
+;;(require-library r7rs) 
 ;;
 ;; quality of life improvements
 (define true  #t)
