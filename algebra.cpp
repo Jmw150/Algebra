@@ -72,7 +72,7 @@ ostream& operator<<(ostream& os, const integer& n)
 }
 
 // print if not equal
-//void isequal(
+
 
     // test suite
 int main()
